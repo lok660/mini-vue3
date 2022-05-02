@@ -32,7 +32,9 @@ export function createRenderer(options) {
         //  如果是Fragment节点,则只渲染children
         processFragment(prevN, currN, container, parentComponent)
         break;
-
+      case Text:
+        //  如果是Text节点,则只渲染text
+        processText(prevN, currN, container)
       default:
         break;
     }
@@ -46,7 +48,15 @@ export function createRenderer(options) {
     })
   }
 
+  //  fragment节点直接处理children内容
   function processFragment(prevN, currN, container, parentComponent) {
     mountChildren(currN.children, container, parentComponent)
+  }
+
+  //  如果是Text节点,则生成text节点到dom容器
+  function processText(prevN, currN, container) {
+    const { children } = currN
+    const textNode = (currN.el = document.createTextNode(children))
+    container.append(textNode)
   }
 }
