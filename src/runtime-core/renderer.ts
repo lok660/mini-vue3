@@ -1,3 +1,5 @@
+import { ShapeFlags } from '../shared/ShapeFlags'
+import { createComponentInstance } from './component'
 import { Fragment, Text } from "./vnode";
 
 export function createRenderer(options) {
@@ -36,8 +38,32 @@ export function createRenderer(options) {
         //  如果是Text节点,则只渲染text
         processText(prevN, currN, container)
       default:
-        break;
+        if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+          //  如果是组件,则渲染组件
+          processComponent(prevN, currN, container, parentComponent)
+        }
+        else if (shapeFlag & ShapeFlags.ELEMENT) {
+          //  如果是element节点,则渲染element
+          processElement(prevN, currN, container, parentComponent)
+        }
     }
+  }
+
+  function processComponent(prevN, currN, container, parentComponent) {
+    if (prevN) {
+      //  如果存在旧的vnode,则更新组件
+      // updateComponent(prevN, currN)
+    } else {
+      mountComponent(currN, container, parentComponent)
+    }
+  }
+
+  function mountComponent(initialVNode, container, parentComponent) {
+    //  创建实例对象
+    const instance = createComponentInstance(initialVNode, parentComponent)
+    //  处理组件的数据状态（reactive/ref/props/slots等）处理渲染函数等
+    setupComponent(instance)
+
   }
 
   function mountChildren(children, container, parentComponent) {

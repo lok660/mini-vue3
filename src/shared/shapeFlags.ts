@@ -1,4 +1,4 @@
-export const enum ShapeFlags {
+export const enum shapeFlags {
   // 利用位运算进行查和改
   ELEMENT = 1,  // 0001
   STATEFUL_COMPONENT = 1 << 1,  // 0010
