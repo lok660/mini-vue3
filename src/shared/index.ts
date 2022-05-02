@@ -14,20 +14,19 @@ export const hasChange = (newValue, oldValue) => {
   return !Object.is(newValue, oldValue);
 };
 
-// add-foo -> ddFoo
+//  add-foo -> addFoo
 export const camelize = (str: string) => {  
   return str.replace(/-(\w)/g, (_, c: string) => {
     return c ? c.toUpperCase() : "";
   });
 };
 
-// add -> Add
+//  add -> Add
 const capitalize = (str: string) => {
   return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
+//  Add --> onAdd
 export const toHandlerKey = (str: string) => {
   return str ? "on" + capitalize(str) : "";
 };
-
-export const EMPTY_OBJ = {};
