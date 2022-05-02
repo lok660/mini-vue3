@@ -1,5 +1,6 @@
-import { ShapeFlags } from '../shared/ShapeFlags'
-import { createComponentInstance } from './component'
+import { effect } from "../reactivity/effect";
+import { ShapeFlags } from '../shared/shapeFlags'
+import { createComponentInstance, setupComponent } from './component'
 import { Fragment, Text } from "./vnode";
 
 export function createRenderer(options) {
@@ -63,7 +64,33 @@ export function createRenderer(options) {
     const instance = createComponentInstance(initialVNode, parentComponent)
     //  处理组件的数据状态（reactive/ref/props/slots等）处理渲染函数等
     setupComponent(instance)
+    //  渲染组件
+    setupRenderEffect(instance, initialVNode, container)
+  }
 
+  function setupRenderEffect(instance, initialVNode, container) {
+    effect(() => {
+      if (!instance.isMounted) {
+        console.log('mount')
+        //  如果组件未挂载,则挂载组件
+        const { proxy } = instance
+        const subTree = instance.subTree = instance.render.call(proxy)
+        //  初始化,没有旧的vnode,直接渲染组件
+        patch(null, subTree, container, instance)
+
+        initialVNode.el = subTree.el  //  将组件的虚拟dom赋值给vnode
+        instance.isMounted = true // 标识组件已经渲染完成
+      } else {
+        console.log('update')
+        //  如果组件已经挂载,则更新组件
+        const { proxy } = instance
+        const subTree = instance.render.call(proxy)
+        const prevSubTree = instance.subTree  //  旧的vnode
+        instance.subTree = subTree  //  新的vnode
+        //  更新组件
+        patch(prevSubTree, subTree, container, instance)
+      }
+    })
   }
 
   function mountChildren(children, container, parentComponent) {
