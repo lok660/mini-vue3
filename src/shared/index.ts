@@ -15,7 +15,7 @@ export const hasChange = (newValue, oldValue) => {
 };
 
 //  add-foo -> addFoo
-export const camelize = (str: string) => {  
+export const camelize = (str: string) => {
   return str.replace(/-(\w)/g, (_, c: string) => {
     return c ? c.toUpperCase() : "";
   });
@@ -30,3 +30,5 @@ const capitalize = (str: string) => {
 export const toHandlerKey = (str: string) => {
   return str ? "on" + capitalize(str) : "";
 };
+
+export const EMPTY_OBJJECT = {};

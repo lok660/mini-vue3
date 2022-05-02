@@ -1,5 +1,9 @@
 import { ShapeFlags } from "../shared/ShapeFlags";
 
+export const Fragment = Symbol("Fragment")
+
+export const Text = Symbol("Text")
+
 //  创建vnode
 //  type: 组件或者元素的类型  props: 属性  children: 子元素
 export function createVNode(type, props?, children?) {
@@ -13,7 +17,7 @@ export function createVNode(type, props?, children?) {
   //  判断是否为组件
   if (Array.isArray(children)) {
     vnode.shapeFlag |= ShapeFlags.ARRAY_CHILDREN;
-  } 
+  }
   //  判断是否为element元素
   else if (typeof children === "string") {
     vnode.shapeFlag |= ShapeFlags.TEXT_CHILDREN;
