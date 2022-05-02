@@ -50,6 +50,68 @@ export function createRenderer(options) {
     }
   }
 
+  function processElement(prevN, currN, container, parentComponent) {
+    //  判断是否是新增节点
+    if (!prevN) {
+      //  如果是新增节点,则创建element
+      mountElement(currN, container, parentComponent)
+    }
+    else {
+      //  如果是旧节点,则更新element
+      patchElement(prevN, currN, container, parentComponent)
+    }
+  }
+
+  function patchElement(prevN, currN, container, parentComponent) {
+    const prevProps = prevN.props || {}
+    const currProps = currN.props || {}
+    //  新的节点没有el
+    const el = (currN.el = prevN.el)
+
+    patchChildren(prevN, currN, el, parentComponent)
+    patchProps(el, prevProps, currProps)
+  }
+
+  function patchChildren(prevN, currN, container, parentComponent) {
+    const { children: prevChildren, shapeFlag: prevShapeFlag } = prevN
+    const { children: currChildren, shapeFlag: currShapeFlag } = currN
+
+    if (currShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        unmountChildren(prevChildren, parentComponent)
+      }
+      if (prevChildren !== currChildren) {
+        hostSetElementText(container, currChildren)
+      }
+    } else {
+      //  TODO
+    }
+
+  }
+
+  function mountElement(vnode, container, parentComponent) {
+    //  创建element
+    const el = vnode.el = hostCreateElement(vnode.type)
+    const { children, shapeFlag, props } = vnode
+    if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+      //  如果是数组,说明传入的是vnode,则遍历渲染
+      mountChildren(vnode.children, el, parentComponent)
+    }
+    else if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      //  如果是文本,则设置文本
+      hostSetElementText(el, children)
+    }
+    //  如果有props,则设置props
+    if (props) {
+      for (let key in props) {
+        hostPatchProp(el, key, null, props[key])
+      }
+    }
+
+    hostInsert(el, container, parentComponent)
+
+  }
+
   function processComponent(prevN, currN, container, parentComponent) {
     if (prevN) {
       //  如果存在旧的vnode,则更新组件
