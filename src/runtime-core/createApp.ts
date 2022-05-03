@@ -4,6 +4,7 @@ export function createAppAPI(render) {
 
   return function createApp(rootComponent) {
     // 返回一个app对象，里面带有mount方法(初始化挂载)
+    console.log('createApp')
     return {
       mount(rootContainer) {
         // 根组件(render) -> vnode -> dom ->挂载到rootContainer

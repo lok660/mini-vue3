@@ -10,7 +10,8 @@ function patchProp(el, key, prevValue, nextValue) {
   if (isOn(key)) {
     const event = key.slice(2).toLowerCase()  //  onClick -> click
     el.addEventListener(event, nextValue)
-  } else {
+  }
+  else {
     if (nextValue === undefined || nextValue === null) {
       //  undefined null 的情况下,移除该属性
       el.removeAttribute(key)
@@ -21,8 +22,8 @@ function patchProp(el, key, prevValue, nextValue) {
   }
 }
 
-function insert(parent, child) {
-  parent.appendChild(child)
+function insert(el, parent) {
+  parent.append(el)
 }
 
 function remove(child) {

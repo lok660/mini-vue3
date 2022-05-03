@@ -12,7 +12,7 @@ export const App = {
       'div',
       {
         id: 'root',
-        class: ['red', 'blue'],
+        class: 'red',
         onClick () {
           console.log('click')
         },

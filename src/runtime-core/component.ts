@@ -28,6 +28,7 @@ export function createComponentInstance(vnode, parent) {
 }
 
 export function setupComponent(instance) {
+
   //  初始化组件的props
   initProps(instance, instance.vnode.props)
   //  初始化组件的slots
@@ -51,9 +52,9 @@ function setupStatefulComponent(instance) {
     //  setup 会返回一个function（name将会是一个render函数）
     //  或者 object（返回成一个对象 注入到当前组件的上下文中
     const setupResult = setup(shallowReadonly(instance.props), {
-      emit: instance.emit
+      emit: instance.emit.bind(null, instance),
     })
-    setCurrentInstance(null)  //  执行后清空
+    setCurrentInstance(null)  //  执行后清空,所以getCurrentInstance()在非setup中不能获取到
     handleSetupResult(instance, setupResult)  //  处理setup的返回结果
   } else {
     //  如果没有setup方法，则直接完成组件的初始化
@@ -85,7 +86,7 @@ function finishComponentSetup(instance) {
   const component = instance.type
   if (component.render) {
     //  如果组件有render方法，则将render方法挂载到实例上
-    instance.render = component.render.bind(instance)
+    instance.render = component.render
   }
   else {
     console.warn(`Component ${component.name} has no render function.`)

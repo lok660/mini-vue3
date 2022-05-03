@@ -15,6 +15,7 @@ export function createRenderer(options) {
   } = options
 
   function render(vnode, container) {
+    console.log('render', vnode, container)
     // 调用patch 方便后续节点做遍历处理
     patch(null, vnode, container, null)
   }
@@ -27,7 +28,6 @@ export function createRenderer(options) {
    * @param parentComponent   父组件
    */
   function patch(prevN, currN, container, parentComponent) {
-
     //  shapeFlag 标识vnode属于哪种类型
     const { type, shapeFlag } = currN
 
@@ -49,6 +49,7 @@ export function createRenderer(options) {
           processElement(prevN, currN, container, parentComponent)
         }
     }
+
   }
 
   function processElement(prevN, currN, container, parentComponent) {
@@ -138,7 +139,7 @@ export function createRenderer(options) {
       }
     }
 
-    hostInsert(el, container, parentComponent)
+    hostInsert(el, container)
 
   }
 
@@ -164,9 +165,8 @@ export function createRenderer(options) {
     effect(() => {
       if (!instance.isMounted) {
         console.log('mount')
-        //  如果组件未挂载,则挂载组件
         const { proxy } = instance
-        const subTree = instance.subTree = instance.render.call(proxy)
+        const subTree = instance.subTree = instance.render.call(proxy)  //  将实例上的proxy代理到render函数上,,通过this.xxx调用
         //  初始化,没有旧的vnode,直接渲染组件
         patch(null, subTree, container, instance)
 

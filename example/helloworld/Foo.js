@@ -1,4 +1,3 @@
-// import { h } from "../../src/runtime-core";
 import { h } from "../../lib/guide-mini-vue.esm.js";
 
 
