@@ -7,6 +7,8 @@ const publicPropertiesMap = {
   $slots: i => i.$slots,
 }
 
+//  处理组件代理对象获取setup返回的数据对象以及$el属性值
+//  此处的代理data,props是通过proxy代理的,与vue2不同
 export const PublicInstanceProxyHandlers = {
 
   get({ _: instance }, key) {
@@ -22,5 +24,4 @@ export const PublicInstanceProxyHandlers = {
       return publicPropertiesMap[key](instance)
     }
   }
-
 }

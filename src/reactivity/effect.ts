@@ -2,123 +2,139 @@ import { extend } from "../shared/index";
 
 let activeEffect
 let shouldTrack
+//  根据Map容器来进行键值对存储 这样可以替换下面的dep定义
+let targetMap = new Map()
 
-export class ReactiveEffect { // 我们搜集的依赖 就是该类（确切的说是有该类包装后的数据）
-  private _fn: any;  // 声明 fn
-  deps = []; // 存储依赖 
-  active = true;
-  onStop?: () => void;
+export class ReactiveEffect {
+  private _fn: any
   public scheduler: Function | undefined
-  constructor(fn, scheduler?: Function) {//scheduler: 是希望在类的外部被访问到的，可选择参数
+  deps = [] //  被存放的dep容器集合
+  active = true //  表示是否被stop停止依赖相应
+  onStop: Function | undefined
+  constructor(fn, scheduler?: Function) {
     this._fn = fn
-    this.scheduler = scheduler;
+    this.scheduler = scheduler
   }
 
-  run() { // 当run调用的时候就意味着函数执行了
-    if (!this.active) { // 判断是否是第一次执行 如果是多次执行就不走getter方法了 -> stop
+  run() {
+    if (!this.active) {
+      //  stop状态直接调用我们的fn并返回
       return this._fn()
     }
     shouldTrack = true
-    activeEffect = this; // 通过 this 就拿到了当前的依赖的实例对象了
+    activeEffect = this //  通过this可获取当前的effect
 
-    let reslut = this._fn();
+    const result = this._fn()
+    //  调用完后重置状态
     shouldTrack = false
-    return reslut// 将_fn 内部的返回值拿到
+    activeEffect = undefined
+    //  返回这个副作用函数的返回结果
+    return result
   }
 
   stop() {
-    // 保证外部用户多次点击 cleanupEffect 函数也是只执行一次
+    //  停止依赖
+    //  保证外部用户多次点击 cleanupEffect 函数也是只执行一次
     if (this.active) {
-      cleanupEffect(this);
-      if (this.onStop) {// 做函数的二次提交
-        this.onStop();
+      cleanupEffect(this)
+      if (this.onStop) {
+        this.onStop()
       }
-      this.active = false;
+      this.active = false
     }
   }
 }
-// 删除dep记录 促使其的第二次执行在scheduler
+
 function cleanupEffect(effect) {
-  effect.deps.forEach((dep: any) => {
-    dep.delete(effect)
-  })
+  //  删除dep记录 促使其的第二次执行scheduler
+  if (effect.deps.length) {
+    effect.deps.forEach(dep => {
+      dep.delete(effect)
+    })
+    effect.deps.length = 0
+  }
 }
 
+//  当activeEffect不为undefined且shouldTrack为true时，可收集依赖
+export function isTracking() {
+  //  当仅仅只是单独获取响应式数据时，并不会触发effect()函数
+  //  此时的activeEffect很有可能是undefined
+  //  不应该track时直接return
+  return shouldTrack && activeEffect !== undefined
+}
 
-let targetMap = new Map();
-export function track(target, key) { // 我们的track是在reactive中的proxy函数内调用的
-  /**
-   * track：我们需要将track传进来的数据起来 一个搜集的依赖的容器 这里通过 set 函数，来确定值的为一性
-   * 我们的依赖项和track传进来的数据存在一个关系：target -> key -> dep  dep即我们实例出来的依赖：
-   */
+export function track(target, key) {
+  if (!isTracking()) return
 
-  if (!isTracking()) return;
-
-  let depsMap = targetMap.get(target);// 对象
-  // 初始化一下数据 判断数据是否存在
+  let depsMap = targetMap.get(target)
+  //  解决初始化获取依赖不存在的问题
   if (!depsMap) {
     depsMap = new Map()
+    //  如果没有则创建一个set集合作为容器并添加到depsMap容器里
     targetMap.set(target, depsMap)
   }
 
   let dep = depsMap.get(key)
   if (!dep) {
+    //  如果没有则创建一个set集合作为容器并添加到depsMap容器里
     dep = new Set()
-    depsMap.set(key, dep) // 将对象里的值 转换出来 {a: 1} => {a: dep(1)}
-  };
-  trackEffects(dep)
+    depsMap.set(key, dep)
+  }
+
+  trackEffect(dep)
 }
 
-export function isTracking() {
-  return shouldTrack && activeEffect !== "undefined"
-  // 排除activeEffect的寄生环境 run 未执行的时候处于 undefined状态
+export function trackEffect(dep) {
+  //  如果当前的effect已经在deps中存在，则不再重复添加
+  if (dep.has(activeEffect)) {
+    return
+  }
+  //  否则添加到deps中
+  dep.add(activeEffect)
+  //  为当前的effect添加依赖
+  activeEffect.deps.push(dep)
 }
 
+export function trigger(target, key) {
+  let depMap = targetMap.get(target)
+  let dep = depMap.get(key)
 
-export function trackEffects(dep) {
-  if (dep.has(activeEffect)) return  // 判断在dep之前 数据收已经存在 存在就直接返回
-  dep.add(activeEffect);// dep: target[key]    我们在这里通过add方法进行依赖收集
-  activeEffect.deps.push(dep) // 通过activeEffect反向收集：用于实现实现 effect 的 stop 功能，提供依赖
+  triggerEffect(dep)
 }
 
-
-export function effect(fn, options: any = {}) {
-
-  const scheduler = options.scheduler;//当响应式对象发生第二次修改时，进行一个标记
-  const _effect = new ReactiveEffect(fn, scheduler)// fn 需要被一出来就调用 我们可以抽离出一个类来实现
-
-  extend(_effect, options);// 取值
-
-  // 当我们调用_effect的时候 是希望可以立即执行 fn 的
-  _effect.run()
-
-  // 这里我们希望在执行effect的时候通过回调返回的函数可以将effect拿到的值的内容一起返回
-  const runner: any = _effect.run.bind(_effect);// 需要注意关联调用者的this指向
-
-  runner.effect = _effect;
-
-  return runner;
-}
-
-
-export function trigger(target, key) { // 通过target和key 对拿到通过track收集到依赖进行遍历
-  let depsMap = targetMap.get(target)
-    , dep = depsMap.get(key);
-  triggerEffects(dep)
-
-}
-
-export function triggerEffects(dep) {
-  for (const effect of dep) {
-    if (effect.scheduler) {//当响应式对象有标记 就调用scheduler函数的执行
-      effect.scheduler();
+export function triggerEffect(dep) {
+  //  如果dep为undefined，则直接返回
+  if (!dep) {
+    return
+  }
+  //  否则遍历dep中的effect，调用其run()方法
+  dep.forEach(effect => {
+    if (effect.scheduler) {
+      effect.scheduler()
     } else {
       effect.run()
     }
-  }
+  })
 }
 
+export function effect(fn, options: any = {}) {
+  const scheduler = options.scheduler
+  //  创建一个新的effect实例
+  const _effect = new ReactiveEffect(fn, scheduler)
+  extend(_effect, options)
+  //  当我们调用_effect的时候 立即执行一次 fn()
+  _effect.run()
+  //  希望在执行effect的时候通过回调返回的函数,将effect拿到的值的内容一起返回
+  const runner: any = _effect.run.bind(_effect)
+  //  给此runner添加effect属性并赋值当前副作用实例
+  runner.effect = _effect
+  //  返回run函数 可让外部使用
+  return runner
 
+}
+
+//  stop函数用来停止副作用函数生效
 export function stop(runner) {
-  runner.effect.stop();
+  //  执行该实例的 stop 函数
+  runner.effect.stop()
 }

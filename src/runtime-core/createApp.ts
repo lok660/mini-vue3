@@ -7,6 +7,10 @@ export function createAppAPI(render) {
     console.log('createApp')
     return {
       mount(rootContainer) {
+        if (typeof rootContainer === 'string') {
+          //  兼容传入的非DOM
+          rootContainer = document.querySelector(rootContainer)
+        }
         // 根组件(render) -> vnode -> dom ->挂载到rootContainer
 
         // 1. 根组件 -> vnode(type type可以是vue component也可以是div等标签, props, children)

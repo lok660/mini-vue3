@@ -68,7 +68,6 @@ function handleSetupResult(instance, setupResult) {
     //  如果setup返回的是一个function，则将其挂载到实例render上
     instance.render = setupResult
   }
-  //  TODO 
   //  steup() { return { count: count.value } }
   else if (isObject(setupResult)) {
     //  如果setup返回的是一个object,则将其注入到当前组件的上下文中
