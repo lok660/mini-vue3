@@ -1,3 +1,4 @@
+import { createAppAPI } from './createApp';
 import { effect } from "../reactivity/effect";
 import { ShapeFlags } from '../shared/shapeFlags'
 import { createComponentInstance, setupComponent } from './component'
@@ -72,21 +73,50 @@ export function createRenderer(options) {
     patchProps(el, prevProps, currProps)
   }
 
+  function patchProps(el, prevProps, currProps) {
+    //  判断是否有新增属性
+    for (const key in currProps) {
+      if (!prevProps || prevProps[key] !== currProps[key]) {
+        //  如果有新增属性,则调用hostPatchProp方法
+        hostPatchProp(el, key, prevProps && prevProps[key], currProps[key])
+      }
+    }
+    if (currProps !== {}) {
+      //  如果有删除属性,则调用hostPatchProp方法
+      for (const key in prevProps) {
+        if (!(key in currProps)) {
+          hostPatchProp(el, key, prevProps[key], null)
+        }
+      }
+    }
+  }
+
   function patchChildren(prevN, currN, container, parentComponent) {
     const { children: prevChildren, shapeFlag: prevShapeFlag } = prevN
     const { children: currChildren, shapeFlag: currShapeFlag } = currN
 
     if (currShapeFlag & ShapeFlags.TEXT_CHILDREN) {
       if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        unmountChildren(prevChildren, parentComponent)
+        unmountChildren(prevChildren) //  如果是旧节点,则销毁旧节点的子节点
       }
       if (prevChildren !== currChildren) {
         hostSetElementText(container, currChildren)
       }
     } else {
-      //  TODO
+      if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+        hostSetElementText(container, '')
+        mountChildren(currChildren, container, parentComponent)
+      } else {
+        //  TODO
+      }
     }
 
+  }
+  function unmountChildren(children) {
+    children.forEach(child => {
+      const el = child.el
+      hostRemove(el)
+    })
   }
 
   function mountElement(vnode, container, parentComponent) {
@@ -173,5 +203,9 @@ export function createRenderer(options) {
     const { children } = currN
     const textNode = (currN.el = document.createTextNode(children))
     container.append(textNode)
+  }
+
+  return {
+    createApp: createAppAPI(render),
   }
 }
