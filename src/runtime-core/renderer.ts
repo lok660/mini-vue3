@@ -15,7 +15,6 @@ export function createRenderer(options) {
   } = options
 
   function render(vnode, container) {
-    console.log('render', vnode, container)
     // 调用patch 方便后续节点做遍历处理
     patch(null, vnode, container, null)
   }
@@ -48,6 +47,7 @@ export function createRenderer(options) {
           //  如果是element节点,则渲染element
           processElement(prevN, currN, container, parentComponent)
         }
+        break
     }
 
   }

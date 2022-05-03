@@ -21,7 +21,6 @@ export function createComponentInstance(vnode, parent) {
     subTree: {},
     emit: () => { }
   }
-
   component.emit = emit.bind(null, component) as any
 
   return component
@@ -52,7 +51,7 @@ function setupStatefulComponent(instance) {
     //  setup 会返回一个function（name将会是一个render函数）
     //  或者 object（返回成一个对象 注入到当前组件的上下文中
     const setupResult = setup(shallowReadonly(instance.props), {
-      emit: instance.emit.bind(null, instance),
+      emit: instance.emit,
     })
     setCurrentInstance(null)  //  执行后清空,所以getCurrentInstance()在非setup中不能获取到
     handleSetupResult(instance, setupResult)  //  处理setup的返回结果
