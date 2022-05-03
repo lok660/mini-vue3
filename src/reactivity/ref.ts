@@ -7,6 +7,8 @@ export function unRef(ref) {
   return isRef(ref) ? ref.value : ref
 }
 
+export function ref() { }
+
 export function proxyRefs(objectWithRefs) {
   // get set
   return new Proxy(objectWithRefs, {

@@ -1,4 +1,4 @@
-import { ShapeFlags } from "../shared/ShapeFlags";
+import { ShapeFlags } from "../shared/shapeFlags";
 
 export const Fragment = Symbol("Fragment")
 

@@ -22,7 +22,7 @@ export function createComponentInstance(vnode, parent) {
     emit: () => { }
   }
 
-  component.emit = emit.bind(null, component)
+  component.emit = emit.bind(null, component) as any
 
   return component
 }

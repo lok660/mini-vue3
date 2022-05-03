@@ -1,4 +1,4 @@
-export { createRenderer } from "./renderer"
+import { createRenderer } from "../runtime-core"
 
 function createElement(type) {
   return document.createElement(type)
@@ -37,5 +37,15 @@ function setElementText(el, text) {
 }
 
 const renderer: any = createRenderer({
-
+  createElement,
+  patchProp,
+  insert,
+  remove,
+  setElementText
 })
+
+export function createApp(...args) {
+  return renderer.createApp(...args)
+}
+
+export * from '../runtime-core'
