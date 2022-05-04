@@ -3,6 +3,8 @@ import { effect } from "../reactivity/effect";
 import { ShapeFlags } from '../shared/shapeFlags'
 import { createComponentInstance, setupComponent } from './component'
 import { Fragment, Text } from "./vnode";
+import { shouldUpdateComponent } from './componentUpdateUtils'
+import { queueJobs } from './scheduler'
 
 export function createRenderer(options) {
 
@@ -21,40 +23,40 @@ export function createRenderer(options) {
 
   /**
    * 
-   * @param prevN   旧的虚拟节点
-   * @param currN   当前的虚拟节点
+   * @param n1   旧的虚拟节点
+   * @param n2   当前的虚拟节点
    * @param container   渲染容器
    * @param parentComponent   父组件
    */
   function patch(
-    prevN,
-    currN,
+    n1,
+    n2,
     container,
     parentComponent,
     anchor,
   ) {
     //  shapeFlag 标识vnode属于哪种类型
-    const { type, shapeFlag } = currN
+    const { type, shapeFlag } = n2
 
     switch (type) {
       case Fragment:
         //  如果是Fragment节点,则只渲染children
-        processFragment(prevN, currN, container, parentComponent, anchor)
+        processFragment(n1, n2, container, parentComponent, anchor)
         break;
 
       case Text:
         //  如果是Text节点,则只渲染text
-        processText(prevN, currN, container)
+        processText(n1, n2, container)
         break;
 
       default:
         if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
           //  如果是组件,则渲染组件
-          processComponent(prevN, currN, container, parentComponent, anchor)
+          processComponent(n1, n2, container, parentComponent, anchor)
         }
         else if (shapeFlag & ShapeFlags.ELEMENT) {
           //  如果是element节点,则渲染element
-          processElement(prevN, currN, container, parentComponent, anchor)
+          processElement(n1, n2, container, parentComponent, anchor)
         }
         break;
     }
@@ -62,74 +64,76 @@ export function createRenderer(options) {
   }
 
   function processElement(
-    prevN,
-    currN,
+    n1,
+    n2,
     container,
     parentComponent,
     anchor
   ) {
     //  判断是否是新增节点
-    if (!prevN) {
+    if (!n1) {
       //  如果是新增节点,则创建element
-      mountElement(currN, container, parentComponent, anchor)
+      mountElement(n2, container, parentComponent, anchor)
     }
     else {
       //  如果是旧节点,则更新element
-      patchElement(prevN, currN, container, parentComponent, anchor)
+      patchElement(n1, n2, container, parentComponent, anchor)
     }
   }
 
   function patchElement(
-    prevN,
-    currN,
+    n1,
+    n2,
     container,
     parentComponent,
     anchor
   ) {
-    const prevProps = prevN.props || {}
-    const currProps = currN.props || {}
+    const oldProps = n1.props || {}
+    const newProps = n2.props || {}
     //  新的节点没有el
-    const el = (currN.el = prevN.el)
+    const el = (n2.el = n1.el)
 
-    patchChildren(prevN, currN, el, parentComponent, anchor)
-    patchProps(el, prevProps, currProps)
+    patchChildren(n1, n2, el, parentComponent, anchor)
+    patchProps(el, oldProps, newProps)
   }
 
-  function patchProps(el, prevProps, currProps) {
+  function patchProps(el, oldProps, newProps) {
     //  判断是否有新增属性
-    for (const key in currProps) {
-      if (!prevProps || prevProps[key] !== currProps[key]) {
-        //  如果有新增属性,则调用hostPatchProp方法
-        hostPatchProp(el, key, prevProps && prevProps[key], currProps[key])
+    for (const key in newProps) {
+      const prevProp = oldProps[key]
+      const nextProp = newProps[key]
+
+      if (prevProp !== nextProp) {
+        hostPatchProp(el, key, prevProp, nextProp)
       }
     }
-    if (currProps !== {}) {
+    if (newProps !== {}) {
       //  如果有删除属性,则调用hostPatchProp方法
-      for (const key in prevProps) {
-        if (!(key in currProps)) {
-          hostPatchProp(el, key, prevProps[key], null)
+      for (const key in oldProps) {
+        if (!(key in newProps)) {
+          hostPatchProp(el, key, oldProps[key], null)
         }
       }
     }
   }
 
-  function patchChildren(prevN, currN, container, parentComponent, anchor) {
-    const { children: prevChildren, shapeFlag: prevShapeFlag } = prevN
-    const { children: currChildren, shapeFlag: currShapeFlag } = currN
+  function patchChildren(n1, n2, container, parentComponent, anchor) {
+    const { children: prevChildren, shapeFlag: prevShapeFlag } = n1
+    const { children: nextChildren, shapeFlag: nextShapeFlag } = n2
 
-    if (currShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+    if (nextShapeFlag & ShapeFlags.TEXT_CHILDREN) {
       if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         unmountChildren(prevChildren) //  如果是旧节点,则销毁旧节点的子节点
       }
-      if (prevChildren !== currChildren) {
-        hostSetElementText(container, currChildren)
+      if (prevChildren !== nextChildren) {
+        hostSetElementText(container, nextChildren)
       }
     } else {
       if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
         hostSetElementText(container, '')
-        mountChildren(currN, container, parentComponent, anchor)
+        mountChildren(nextChildren, container, parentComponent, anchor)
       } else {
-        patchKeyedChildren(prevN, currN, container, parentComponent, anchor)
+        patchKeyedChildren(prevChildren, nextChildren, container, parentComponent, anchor)
       }
     }
   }
@@ -333,12 +337,26 @@ export function createRenderer(options) {
 
   }
 
-  function processComponent(prevN, currN, container, parentComponent, anchor) {
-    if (prevN) {
+  function processComponent(n1, n2, container, parentComponent, anchor) {
+    if (n1) {
       //  如果存在旧的vnode,则更新组件
-      // updateComponent(prevN, currN)
+      updateComponent(n1, n2)
     } else {
-      mountComponent(currN, container, parentComponent, anchor)
+      mountComponent(n2, container, parentComponent, anchor)
+    }
+  }
+
+  function updateComponent(n1, n2) {
+    // 判断是否需要更新
+    const instance = (n2.component = n1.component)
+    if (shouldUpdateComponent(n1, n2)) {
+      instance.next = n2
+
+      instance.update()
+    } else {
+      // 重置虚拟节点
+      n2.el = n1.el
+      n2.vnode = n2
     }
   }
 
@@ -364,6 +382,12 @@ export function createRenderer(options) {
         instance.isMounted = true // 标识组件已经渲染完成
       } else {
         console.log('update')
+        const { next, vnode } = instance
+
+        if (next) {
+          next.el = vnode.el
+          updateComponentPreRender(instance, next)
+        }
         //  如果组件已经挂载,则更新组件
         const { proxy } = instance
         const subTree = instance.render.call(proxy)
@@ -372,7 +396,14 @@ export function createRenderer(options) {
         //  更新组件
         patch(prevSubTree, subTree, container, instance, anchor)
       }
-    })
+    },
+      {
+        scheduler() {
+          console.log('update-scheduler')
+
+          queueJobs(instance.update)
+        },
+      })
   }
 
   function mountChildren(children, container, parentComponent, anchor) {
@@ -384,20 +415,34 @@ export function createRenderer(options) {
   }
 
   //  fragment节点直接处理children内容
-  function processFragment(prevN, currN, container, parentComponent, anchor) {
-    mountChildren(currN.children, container, parentComponent, anchor)
+  function processFragment(n1, n2, container, parentComponent, anchor) {
+    mountChildren(n2.children, container, parentComponent, anchor)
   }
 
   //  如果是Text节点,则生成text节点到dom容器
-  function processText(prevN, currN, container) {
-    const { children } = currN
-    const textNode = (currN.el = document.createTextNode(children))
+  function processText(n1, n2, container) {
+    const { children } = n2
+    const textNode = (n2.el = document.createTextNode(children))
     container.appendChild(textNode)
   }
 
   return {
     createApp: createAppAPI(render),
   }
+}
+
+/**
+ * @description: 更新Component的vnode
+ * 将 新的 vnode 赋值给  vnode
+ * 赋值后重置next节点
+ * @param {*} instance
+ * @param {*} nextVNode
+ * @return {*}
+ */
+function updateComponentPreRender(instance, nextVNode) {
+  instance.vnode = nextVNode
+  instance.next = null
+  instance.props = nextVNode.props
 }
 
 // 最长递增子序列算法

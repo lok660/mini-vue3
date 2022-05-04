@@ -9,3 +9,5 @@ export { createTextVNode } from "./vnode";
 export { renderSlots } from "./helpers/renderSlots";
 
 export { provide, inject } from "./appInject";
+
+export { nextTick } from './scheduler'

@@ -2,7 +2,7 @@ import { isObject, hasChanged } from '../shared'
 import { reactive } from './reactive'
 import { trackEffects, triggerEffects, isTracking } from './effect'
 
-class Refimp {
+class RefImpl {
   public dep;  //  ref收集的依赖容器,
   private _value: any;  //  ref的值, 可以通过ref.value获取
   private _rawValue: any; //  ref的原始值, 可以通过这个值来比较是否发生变化
@@ -33,7 +33,7 @@ class Refimp {
 }
 
 //  如果当前可以收集依赖则收集跟当前ref对象有关的依赖
-function trackRefValue(ref: Refimp) {
+function trackRefValue(ref: RefImpl) {
   if (isTracking()) {
     trackEffects(ref.dep);
   }
@@ -52,7 +52,9 @@ export function unRef(ref) {
   return isRef(ref) ? ref.value : ref
 }
 
-export function ref() { }
+export function ref(value) {
+  return new RefImpl(value)
+}
 
 export function proxyRefs(objectWithRefs) {
   // get set
