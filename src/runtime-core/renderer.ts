@@ -26,7 +26,13 @@ export function createRenderer(options) {
    * @param container   渲染容器
    * @param parentComponent   父组件
    */
-  function patch(prevN, currN, container, parentComponent) {
+  function patch(
+    prevN,
+    currN,
+    container,
+    parentComponent
+  ) {
+    console.log(container, currN)
     //  shapeFlag 标识vnode属于哪种类型
     const { type, shapeFlag } = currN
 
@@ -35,9 +41,12 @@ export function createRenderer(options) {
         //  如果是Fragment节点,则只渲染children
         processFragment(prevN, currN, container, parentComponent)
         break;
+
       case Text:
         //  如果是Text节点,则只渲染text
         processText(prevN, currN, container)
+        break;
+
       default:
         if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
           //  如果是组件,则渲染组件
@@ -47,12 +56,17 @@ export function createRenderer(options) {
           //  如果是element节点,则渲染element
           processElement(prevN, currN, container, parentComponent)
         }
-        break
+        break;
     }
 
   }
 
-  function processElement(prevN, currN, container, parentComponent) {
+  function processElement(
+    prevN,
+    currN,
+    container,
+    parentComponent
+  ) {
     //  判断是否是新增节点
     if (!prevN) {
       //  如果是新增节点,则创建element
@@ -64,7 +78,12 @@ export function createRenderer(options) {
     }
   }
 
-  function patchElement(prevN, currN, container, parentComponent) {
+  function patchElement(
+    prevN,
+    currN,
+    container,
+    parentComponent
+  ) {
     const prevProps = prevN.props || {}
     const currProps = currN.props || {}
     //  新的节点没有el
@@ -106,7 +125,7 @@ export function createRenderer(options) {
     } else {
       if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
         hostSetElementText(container, '')
-        mountChildren(currChildren, container, parentComponent)
+        mountChildren(currN, container, parentComponent)
       } else {
         //  TODO
       }
@@ -115,18 +134,17 @@ export function createRenderer(options) {
   }
   function unmountChildren(children) {
     children.forEach(child => {
-      const el = child.el
-      hostRemove(el)
+      hostRemove(child.el)
     })
   }
 
   function mountElement(vnode, container, parentComponent) {
     //  创建element
-    const el = vnode.el = hostCreateElement(vnode.type)
-    const { children, shapeFlag, props } = vnode
+    const { children, shapeFlag, props, type } = vnode
+    const el = vnode.el = hostCreateElement(type)
     if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       //  如果是数组,说明传入的是vnode,则遍历渲染
-      mountChildren(vnode.children, el, parentComponent)
+      mountChildren(children, el, parentComponent)
     }
     else if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       //  如果是文本,则设置文本
@@ -202,7 +220,7 @@ export function createRenderer(options) {
   function processText(prevN, currN, container) {
     const { children } = currN
     const textNode = (currN.el = document.createTextNode(children))
-    container.append(textNode)
+    container.appendChild(textNode)
   }
 
   return {
