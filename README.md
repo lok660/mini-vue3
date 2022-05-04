@@ -8,3 +8,5 @@
 [diff核心]: https://github.com/amebyte/vue-diff/blob/main/vue-diff.js
 [vue核心解析]: https://github.com/lazyChan297/blog/tree/main/docs/analysis
 
+[参考]: https://github.com/XUBXUE/mini-vue
+
