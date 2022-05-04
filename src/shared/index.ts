@@ -14,7 +14,7 @@ export const hasOwn = (value, key) => {
   return Object.prototype.hasOwnProperty.call(value, key);
 };
 
-export const hasChange = (newValue, oldValue) => {
+export const hasChanged = (newValue, oldValue) => {
   return !Object.is(newValue, oldValue);
 };
 

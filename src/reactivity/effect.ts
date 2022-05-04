@@ -81,10 +81,10 @@ export function track(target, key) {
     depsMap.set(key, dep)
   }
 
-  trackEffect(dep)
+  trackEffects(dep)
 }
 
-export function trackEffect(dep) {
+export function trackEffects(dep) {
   //  如果当前的effect已经在deps中存在，则不再重复添加
   if (dep.has(activeEffect)) {
     return
@@ -99,10 +99,10 @@ export function trigger(target, key) {
   let depMap = targetMap.get(target)
   let dep = depMap.get(key)
 
-  triggerEffect(dep)
+  triggerEffects(dep)
 }
 
-export function triggerEffect(dep) {
+export function triggerEffects(dep) {
   //  如果dep为undefined，则直接返回
   if (!dep) {
     return
