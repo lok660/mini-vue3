@@ -32,7 +32,6 @@ export function createRenderer(options) {
     container,
     parentComponent
   ) {
-    console.log(container, currN)
     //  shapeFlag 标识vnode属于哪种类型
     const { type, shapeFlag } = currN
 
