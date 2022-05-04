@@ -1,22 +1,12 @@
-import { h } from "../../lib/guide-mini-vue.esm.js";
-
-export const Foo = {
-  setup(props, { emit }) {
-    const emitAdd = () => {
-      emit('add', 1, 2, 3);
-      emit('add-foo', 1, 2, 3);
-    };
-    return { emitAdd };
-  },
-  render() {
-    const Button = h(
-      "button",
-      {
-        onClick: this.emitAdd,
-      },
-      "emitAdd"
-    );
-    const Foo = h("p", {}, "Foo");
-    return h("div", {}, [Button, Foo]);
-  },
-};
+import {h} from '../../lib/guide-mini-vue.esm.js'
+export const Foo ={
+    setup(props) {
+        // porps.count
+        // console.log(props)
+        // 3 props是shallowReadOnly属性
+        props.count++
+    },
+    render(){
+        return h('div',{},"foo" + this.count)
+    }
+}

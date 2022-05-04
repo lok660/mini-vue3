@@ -1,24 +1,27 @@
-import { createVNode } from "./vnode"
+// import { render } from "./renderer";
+import { createVNode } from "./vnode";
 
-export function createAppAPI(render) {
+// render
 
-  return function createApp(rootComponent) {
-    // 返回一个app对象，里面带有mount方法(初始化挂载)
-    console.log('createApp')
-    return {
-      mount(rootContainer) {
-        if (typeof rootContainer === 'string') {
-          //  兼容传入的非DOM
-          rootContainer = document.querySelector(rootContainer)
+export function createAppAPI(render){
+
+    return function createAPP( rootComponent){
+        
+        
+        return {
+            // 接受一个根容器
+            mount(rootContainer){
+                // 在vue3都会将所有的元素转换成虚拟节点
+                // 所有的逻辑操作都会基于vnode来执行
+                
+                const vnode = createVNode(rootComponent);
+
+                
+                render(vnode,rootContainer)                
+            }
         }
-        // 根组件(render) -> vnode -> dom ->挂载到rootContainer
-
-        // 1. 根组件 -> vnode(type type可以是vue component也可以是div等标签, props, children)
-        const vnode = createVNode(rootComponent)
-
-        // 2. 内部调用patch方法 ，进行递归的处理
-        render(vnode, rootContainer)
-      }
+        
+        
     }
-  }
+   
 }

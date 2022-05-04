@@ -1,26 +1,33 @@
-import { hasOwn } from "../shared/index";
+import { hasOwn } from "../shared"
 
 const publicPropertiesMap = {
-  $el: i => i.vnode.el,
-  $props: i => i.props,
-  $slots: i => i.slots,
+    $el:(i)=> i.vnode.el,
+    // $slots
+    $slots:(i)=> i.slots,
+    $props:(i)=> i.props
+    
 }
-
-//  处理组件代理对象获取setup返回的数据对象以及$el属性值
-//  此处的代理data,props是通过proxy代理的,与vue2不同
 export const PublicInstanceProxyHandlers = {
-
-  get({ _: instance }, key) {
-    const { setupState, props } = instance
-    //  如果是setupState中的属性，则返回setupState中的属性
-    if (hasOwn(setupState, key)) {
-      return setupState[key]
+    get({_:instance},key){
+        // 先从setupstate中获取值
+        const {setupState,props} = instance
+        // if(key in setupState){
+        //     return setupState[key]
+        // }
+        // 将上面的逻辑进行重构 加上我们的props的逻辑
+        // const hasOwn = (val,key)=> Object.prototype.hasOwnProperty.call(val,key)
+            if(hasOwn(setupState,key)){
+                return setupState[key]
+            }else if(hasOwn(props,key)){
+                return props[key]
+            }
+        // key=>el
+        const publicGetter = publicPropertiesMap[key]
+        if(publicGetter){
+            return publicGetter(instance)
+        }
+        // if(key === '$el'){
+            // return instance.vnode.el
+        // }
     }
-    else if (hasOwn(props, key)) {
-      return props[key]
-    }
-    else if (hasOwn(publicPropertiesMap, key)) {
-      return publicPropertiesMap[key](instance)
-    }
-  }
 }

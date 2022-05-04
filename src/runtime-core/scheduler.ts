@@ -1,38 +1,41 @@
-const queue: any[] = []
+const queue: any = []
+// 引入一个开关
 let isFlushPending = false
-const p = Promise.resolve()
-
+let p = Promise.resolve()
 export function nextTick(fn) {
+
   return fn ? p.then(fn) : p
 }
 
 export function queueJobs(job) {
-  if (!queue.includes(job)) {
+
+  if (queue.includes(job)) {
+
+  } else {
     queue.push(job)
   }
-
-  // 微任务执行job
   queueFlush()
 }
 
-/**
- * @description: 使用Promise来异步执行job，减少更新的次数
- * @param {*}
- * @return {*}
- */
 function queueFlush() {
-  if (isFlushPending) {
-    return
-  }
+  if (isFlushPending) return
   isFlushPending = true
 
   nextTick(flushJobs)
+  // Promise.resolve().then(()=>{
+  // 这段代码可以利用上面的nextTick来执行  将下面的代码进行抽离
+  // })
 }
 
 function flushJobs() {
-  isFlushPending = false
+  isFlushPending = false  // 重置开关
   let job
-  while ((job = queue.shift())) {
+  while (job = queue.shift()) {
     job && job()
   }
 }
+
+
+
+
+

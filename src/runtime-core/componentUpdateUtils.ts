@@ -1,9 +1,16 @@
-export function shouldUpdateComponent(prevVNode, nextVNode) {
-  const { props: prevProps } = prevVNode
-  const { props: nextProps } = nextVNode
+export function shouldUpdateComponent(preVnode,nextVnode){
 
-  for (const key in nextProps) {
-    if (nextProps[key] !== prevProps[key]) return true
-  }
-  return false
+    const {props:preprops} = preVnode
+    const {props:nextprops} = nextVnode
+
+    for (const key in nextprops) {
+        if(nextprops[key] !== preprops[key]){
+            return true
+        }else{
+            return false
+        }
+    }
+    
+
+
 }

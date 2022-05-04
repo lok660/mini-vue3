@@ -1,36 +1,23 @@
-window.self = null
-import { h } from '../../lib/guide-mini-vue.esm.js'
-import { Foo } from './Foo.js'
-
+import {h} from '../../lib/guide-mini-vue.esm.js'
+import { Foo } from './foo.js'
 export const App = {
-  name: 'App',
-
-  render () {
-    window.self = this
-    // ui
-    return h(
-      'div',
-      {
-        id: 'root',
-        class: 'red',
-        onClick () {
-          console.log('click')
+    name:"App",
+    render(){
+        // emit
+        return h('div',{ 
         },
-        onMousedown () {
-          console.log('onmouserdown')
-        },
-      },
-
-      [
-        h('div', {}, 'hi:' + this.msg),
-        h(Foo, { count: 1 })
-      ]
-    )
-  },
-
-  setup () {
-    return {
-      msg: 'mini-vue',
+        [h("div",{},"App"),h(Foo,{
+            // emit类似于我们的element设置的on事件
+            onAdd(a,b){
+                // console.log("onAdd",a,b)
+            },
+            onAddFoo(){
+                // console.log('onAddFoo')
+            }
+        })])
+    },
+    setup(){
+        return {
+        }
     }
-  },
 }

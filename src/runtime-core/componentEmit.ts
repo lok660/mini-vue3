@@ -1,12 +1,16 @@
-import { camelize, toHandlerKey } from '../shared'
+import { cameLize, toHandlerKey } from "../shared"
 
-export function emit(instance, event, ...args) {
+export function emit(instance,event,...args){
+    console.log("emit",emit)
+    // instance.props => event
+    const {props} = instance
+    // add => Add
+    // add-foo => addFoo
 
-  const { props } = instance
+    const handlerName = toHandlerKey(cameLize(event))
 
-  const handleName = toHandlerKey(camelize(event))
+    // TPP 先去写一个特定的行为 在去重构成通用的行为
+    const handler = props[handlerName]
+    handler && handler(...args)
+}   
 
-  const handler = props[handleName]
-  handler && handler(...args)
-
-}

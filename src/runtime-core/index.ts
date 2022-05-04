@@ -1,13 +1,8 @@
-export { h } from "./h";
-
-export { createRenderer } from "./renderer";
-
+// 导出的出口文件
+export { h } from './h'
+export { renderSlots } from './renderSlots'
+export { createTextVNode } from './vnode'
 export { getCurrentInstance } from './component'
-
-export { createTextVNode } from "./vnode";
-
-export { renderSlots } from "./helpers/renderSlots";
-
-export { provide, inject } from "./appInject";
-
+export { provide, inject } from './apiInject'
+export { createRenderer } from './renderer'
 export { nextTick } from './scheduler'
